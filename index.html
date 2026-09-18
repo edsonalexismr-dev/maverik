@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Social Listening Dashboard</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div id="app">
+    <header id="top-bar">
+      <h1>Social Listening</h1>
+      <span id="last-updated">Última actualización: —</span>
+      <button id="refresh-btn">Actualizar</button>
+    </header>
+
+    <section id="filters">
+      <label>
+        Periodo:
+        <select id="filter-period">
+          <option value="24h">Últimas 24 h</option>
+          <option value="7d">Últimos 7 días</option>
+          <option value="30d">Últimos 30 días</option>
+        </select>
+      </label>
+
+      <label>
+        Red social:
+        <select id="filter-platform">
+          <option value="all">Todas</option>
+          <option value="x">X</option>
+          <option value="instagram">Instagram</option>
+        </select>
+      </label>
+
+      <label>
+        Tipo de cuenta:
+        <select id="filter-account-type">
+          <option value="all">Todas</option>
+          <option value="gov">Gobierno</option>
+          <option value="media">Medios</option>
+          <option value="citizen">Ciudadano</option>
+        </select>
+      </label>
+
+      <label>
+        Institución:
+        <select id="filter-institution">
+          <option value="all">Todas</option>
+        </select>
+      </label>
+
+      <label>
+        Prioridad:
+        <select id="filter-priority">
+          <option value="all">Todas</option>
+          <option value="high">Alta</option>
+          <option value="medium">Media</option>
+          <option value="low">Baja</option>
+        </select>
+      </label>
+    </section>
+
+    <section id="summary-cards" class="cards">
+      <div class="card" id="card-new-posts">
+        <h3>Nuevas publicaciones</h3>
+        <p class="value">—</p>
+      </div>
+      <div class="card" id="card-active-topics">
+        <h3>Temas activos</h3>
+        <p class="value">—</p>
+      </div>
+      <div class="card" id="card-alerts">
+        <h3>Alertas</h3>
+        <p class="value">—</p>
+      </div>
+      <div class="card" id="card-official-updates">
+        <h3>Comunicados oficiales</h3>
+        <p class="value">—</p>
+      </div>
+    </section>
+
+    <section id="now-section">
+      <h2>Ahora</h2>
+      <div id="now-content"></div>
+    </section>
+
+    <section id="trends-section">
+      <h2>Tendencias</h2>
+      <div id="trends-content"></div>
+    </section>
+
+    <section id="gov-activity-section">
+      <h2>Actividad gubernamental</h2>
+      <div id="gov-content"></div>
+    </section>
+
+    <section id="alerts-section">
+      <h2>Alertas</h2>
+      <div id="alerts-content"></div>
+    </section>
+
+    <section id="opportunities-section">
+      <h2>Oportunidades de contenido</h2>
+      <div id="opportunities-content"></div>
+    </section>
+
+    <div id="status-message" class="hidden"></div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
