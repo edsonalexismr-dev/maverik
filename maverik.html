@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Maverik – Monitoreo de Redes Sociales</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --primary-blue: #0066cc;
+            --light-bg: #f5faff;
+            --dark-text: #222;
+        }
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: var(--light-bg);
+            color: var(--dark-text);
+        }
+        header {
+            background-color: var(--primary-blue);
+            color: white;
+            padding: 1rem 2rem;
+            text-align: center;
+        }
+        nav {
+            display: flex;
+            justify-content: center;
+            background-color: #e6f2ff;
+            padding: 0.5rem 0;
+            border-bottom: 2px solid var(--primary-blue);
+        }
+        nav button {
+            background: none;
+            border: none;
+            margin: 0 0.5rem;
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            cursor: pointer;
+            color: var(--primary-blue);
+        }
+        nav button.active {
+            border-bottom: 2px solid var(--primary-blue);
+            font-weight: bold;
+        }
+        .section {
+            display: none;
+            padding: 2rem;
+        }
+        .section.active {
+            display: block;
+        }
+        .post-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+        .post {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .post img {
+            width: 100%;
+            height: auto;
+        }
+        .post .caption {
+            padding: 0.5rem;
+            font-size: 0.9rem;
+        }
+        .trend-list, .report-list {
+            list-style: none;
+            padding: 0;
+        }
+        .trend-item, .report-item {
+            background: white;
+            margin-bottom: 0.5rem;
+            padding: 0.75rem;
+            border-left: 4px solid var(--primary-blue);
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Maverik – Monitoreo Social</h1>
+    </header>
+    <nav>
+        <button class="active" data-target="instagram">Instagram</button>
+        <button data-target="x">X (Twitter)</button>
+        <button data-target="trends">Tendencias</button>
+        <button data-target="reports">Reportes</button>
+    </nav>
+    <main>
+        <!-- Instagram Section -->
+        <section id="instagram" class="section active">
+            <h2>Instagram – Últimas publicaciones</h2>
+            <div id="instagram-posts" class="post-list"></div>
+        </section>
+        <!-- X Section -->
+        <section id="x" class="section">
+            <h2>X – Últimos tweets</h2>
+            <div id="x-posts" class="post-list"></div>
+        </section>
+        <!-- Trends Section -->
+        <section id="trends" class="section">
+            <h2>Palabras en tendencia</h2>
+            <ul id="trend-list" class="trend-list"></ul>
+        </section>
+        <!-- Reports Section -->
+        <section id="reports" class="section">
+            <h2>Reportes (semana / mes)</h2>
+            <ul id="report-list" class="report-list"></ul>
+        </section>
+    </main>
+    <script>
+        // ==================== CONFIGURATION ====================
+        const CONFIG = {
+            // Instagram usernames (without @)
+            instagram: [
+                "chismecitopolitico",
+                "politicomx",
+                "elnorte",
+                "abcnoticiasmx",
+                "altavozmx",
+                "reforma",
+                "mtygob",
+                "sanpedroggnl",
+                "stacatarinagob",
+                "gpegob",
+                "santiago_nuevoleon",
+                "juareznlmx",
+                "apodacaoficialnl",
+                "gobsannicolas",
+                "gobiernodegarcia",
+                "gobiernoescobedo"
+            ],
+            // X usernames (without @)
+            x: [
+                "azucenau",
+                "El_Universal_Mx",
+                "Juan_OrtizMX",
+                "lopezdoriga",
+                "CarlosLoret"
+            ],
+            // How often the front‑end asks the backend for fresh data (ms)
+            refreshInterval: 60000, // 1 minuto
+        };
+        // ======================================================
+
+        // Simple tab navigation
+        document.querySelectorAll('nav button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const target = btn.getAttribute('data-target');
+                document.querySelectorAll('.section').forEach(sec => {
+                    sec.classList.toggle('active', sec.id === target);
+                });
+            });
+        });
+
+        // ---------- FETCHING HELPERS ----------
+        // These functions presume you have a tiny backend that proxies Instagram and X APIs
+        // (You can implement it in Node/Express, Flask, etc. – see the README below).
+        async function fetchInstagramPosts(usernames) {
+            // Expected endpoint: GET /api/instagram?users=comma,separated,list
+            const resp = await fetch(`/api/instagram?users=${usernames.join(',')}`);
+            if (!resp.ok) throw new Error('Instagram API error');
+            return await resp.json(); // [{username, mediaUrl, caption, timestamp}, ...]
+        }
+        async function fetchXPosts(usernames) {
+            // Expected endpoint: GET /api/x?users=comma,separated,list
+            const resp = await fetch(`/api/x?users=${usernames.join(',')}`);
+            if (!resp.ok) throw new Error('X API error');
+            return await resp.json(); // [{username, text, mediaUrl, timestamp}, ...]
+        }
+        // --------------------------------------
+
+        // ---------- RENDERING ----------
+        function renderInstagram(posts) {
+            const container = document.getElementById('instagram-posts');
+            container.innerHTML = '';
+            posts.forEach(p => {
+                const div = document.createElement('div');
+                div.className = 'post';
+                div.innerHTML = `
+                    <img src="${p.mediaUrl}" alt="${p.username}" loading="lazy" />
+                    <div class="caption"><strong>@${p.username}</strong>: ${p.caption}</div>
+                `;
+                container.appendChild(div);
+            });
+        }
+        function renderX(posts) {
+            const container = document.getElementById('x-posts');
+            container.innerHTML = '';
+            posts.forEach(p => {
+                const div = document.createElement('div');
+                div.className = 'post';
+                const media = p.mediaUrl ? `<img src="${p.mediaUrl}" alt="media" loading="lazy" />` : '';
+                div.innerHTML = `
+                    ${media}
+                    <div class="caption"><strong>@${p.username}</strong>: ${p.text}</div>
+                `;
+                container.appendChild(div);
+            });
+        }
+        function extractKeywords(texts) {
+            // Very simple keyword extraction: split, lower‑case, remove stop‑words, count.
+            const stop = new Set(['de', 'la', 'el', 'en', 'y', 'para', 'con', 'por', 'un', 'una', 'los', 'las', 'del', 'que', 'se', 'me', 'te', 'nos', 'les', 'sólo', 'más', 'pero', 'como', 'sobre', 'tiene', 'han', 'cuando', 'muy', 'también', 'a', 'su', 'sus', 'mi', 'mis', 'tu', 'tus', 'nosotros', 'vosotros', 'ellos', 'ellas']);
+            const freq = {};
+            texts.forEach(t => {
+                t.toLowerCase().split(/[^a-záéíóúñ]+/i).forEach(w => {
+                    if (w && !stop.has(w) && w.length > 2) {
+                        freq[w] = (freq[w] || 0) + 1;
+                    }
+                });
+            });
+            // Return top 10
+            return Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,10);
+        }
+        function renderTrends(keywords) {
+            const ul = document.getElementById('trend-list');
+            ul.innerHTML = '';
+            keywords.forEach(([word, count]) => {
+                const li = document.createElement('li');
+                li.className = 'trend-item';
+                li.textContent = `${word} (${count})`;
+                ul.appendChild(li);
+            });
+        }
+        function renderReport(period, keywords) {
+            const ul = document.getElementById('report-list');
+            const li = document.createElement('li');
+            li.className = 'report-item';
+            const words = keywords.map(([w,c])=> `${w} (${c})`).join(', ');
+            li.innerHTML = `<strong>${period}:</strong> ${words}`;
+            ul.appendChild(li);
+        }
+        // ---------------------------------
+
+        // ---------- MAIN LOOP ----------
+        async function refreshAll() {
+            try {
+                const [instPosts, xPosts] = await Promise.all([
+                    fetchInstagramPosts(CONFIG.instagram),
+                    fetchXPosts(CONFIG.x)
+                ]);
+                renderInstagram(instPosts);
+                renderX(xPosts);
+                // Gather all text for trend analysis
+                const allTexts = [];
+                instPosts.forEach(p => allTexts.push(p.caption || ''));
+                xPosts.forEach(p => allTexts.push(p.text || ''));
+                const topKeywords = extractKeywords(allTexts);
+                renderTrends(topKeywords);
+                // Simple weekly / monthly reports (using the same keyword list for demo)
+                renderReport('Semana pasada', topKeywords);
+                renderReport('Mes pasado', topKeywords);
+            } catch (e) {
+                console.error('Error al refrescar datos:', e);
+            }
+        }
+        // Initial load
+        refreshAll();
+        // Periodic refresh
+        setInterval(refreshAll, CONFIG.refreshInterval);
+        // --------------------------------
+    </script>
+    <footer style="text-align:center;padding:1rem;font-size:0.8rem;color:#666;">
+        Maverik – © 2026 – Monitor de Redes Sociales
+    </footer>
+</body>
+</html>
